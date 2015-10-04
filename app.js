@@ -12,7 +12,7 @@ var	passport = require('passport');
 
 var	app = express();
 
-app.engine('ejs','engine');
+app.engine('ejs',engine);
 app.set('view engine','ejs');
 
 

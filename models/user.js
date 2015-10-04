@@ -11,9 +11,11 @@ var User = new Schema({
 
 
 User.methods.hashPassword = function(password){
-	return bcrypt.hashSync(password,bcrypt.genSaltSync);
+	return bcrypt.hashSync(password,bcrypt.genSaltSync());
 };
 
 User.methods.validatePassword = function(password){
 	return bcrypt.compareSync(password, this.local.password);
 };
+
+module.exports = mongoose.model('User',User);

@@ -1,16 +1,16 @@
-var mongoose = require('mongoose'),
-	LocalStrategy = require('passpot-local').Strategy;
+var passport = require('passport');
+
+var LocalStrategy = require('passport-local').Strategy;
 
 var User = require('../models/user');
 
-var Schema = mongoose.Schema;
 
-passport.localRegisterInit = function(req,email,password,callback){
+var localRegisterInit = function(req,email,password,callback){
 	   User.findOne({
 	   		'local.email' :  email
 	   } , function(err, user){
 	   		if (err) {
-	   			throw err
+	   			return callback(err);
 	   		}
 	   		if (user) {
 	   			return callback(null,false);
@@ -18,7 +18,7 @@ passport.localRegisterInit = function(req,email,password,callback){
 
 	   		var newUser = new User();
 	   		newUser.local.email = email;
-	   		newUser.local.password = newUser.hasPassword(password);
+	   		newUser.local.password = newUser.hashPassword(password);
 
 	   		newUser.save(function(err){
 	   			if (err) {
@@ -31,14 +31,14 @@ passport.localRegisterInit = function(req,email,password,callback){
 };
 
 
-passport.localLoginInit = function(req,email,password,callback){
+var localLoginInit = function(req,email,password,callback){
 	   User.findOne({
 	   		'local.email' :  email
 	   } , function(err, user){
 	   		if (err) {
 	   			throw err
 	   		}
-	   		if (!user && !user.validatePassword(password)) {
+	   		if (!user || !user.validatePassword(password)) {
 	   			return callback(null,false);
 	   		}
 	   		return callback(null,user);
@@ -47,13 +47,25 @@ passport.localLoginInit = function(req,email,password,callback){
 
 
 
-var localDash = {
+var localOptions = {
 	usernameField : "emailAddress",
 	passReqToCallback : true
 };
 
-passport.use('local-register',new LocalStrategy(localDash, localRegisterInit);
-passport.use('local-login',new LocalStrategy(localDash, localLoginInit);
+passport.use('local-register',new LocalStrategy(localOptions, localRegisterInit));
+passport.use('local-login',new LocalStrategy(localOptions, localLoginInit));
+
+
+
+passport.serializeUser(function(user,callback){
+	callback(null,user.id);
+});
+
+passport.deserializeUser(function(id,callback){
+	User.findById(id,function(err,user){
+		callback(err,user);
+	});
+});
 
 module.exports = {
 	localRegister : passport.authenticate('local-register', {
@@ -63,5 +75,5 @@ module.exports = {
 	localLogin : passport.authenticate('local-login',{
 		successRedirect : '/',
 		failureRedirect : '/login'
-	)}
+	})
 };
